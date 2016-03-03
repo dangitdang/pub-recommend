@@ -57,7 +57,8 @@ var Recs = {
                 thing: pub
               }).then(function(events) {
                 if (inputValidation(events, action)) {
-                  deferred.reject(mutualExclusives[action])
+                  //TODO : Update action based by priority 
+                  deferred.reject(mutualExclusives[action]);
                 }
                 ger.events([event]).then(function() {
                   deferred.resolve(null);
