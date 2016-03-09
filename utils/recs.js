@@ -15,9 +15,10 @@ var eventToAction = function(event) {
   return event.action;
 };
 var createMutualExs = function(obj) {
-  var dict = obj;
+  var dict = {};
   R.forEach(function(k) {
     dict[k] = obj[k];
+    dict[obj[k]] = k
   }, R.keys(obj));
   return dict;
 };
@@ -54,18 +55,18 @@ var Recs = {
               }
             }
             return Recs.insertEvent(journal, user, pub, action)
-              .then(function(){
+              .then(function() {
+                deferred.resolve(null);
+              });
+          });
+        } else {
+          ger.initialize_namespace(journal).then(function() {
+            Recs.insertEvent(journal, user, pub, action)
+              .then(function() {
                 deferred.resolve(null);
               });
           });
         }
-        ger.initialize_namespace(journal).then(function() {
-          console.log('initialized namespace');
-          Recs.insertEvent(journal, user, pub, action)
-            .then(function() {
-              deferred.resolve(null);
-            });
-        });
       });
     return deferred.promise;
   },
@@ -80,7 +81,7 @@ var Recs = {
         }
         ger.recommendations_for_person(journal, user, {
           actions: config.actions,
-          filter_previous_actions: ['read', 'dislike']
+          filter_previous_actions: ['read', 'like']
         }).then(function(recommendations) {
           //TODO: Add featured pubs and defaults rec
           deferred.resolve(recommendations);
@@ -90,8 +91,7 @@ var Recs = {
   },
   deleteAction: function(journal, user, pub, action) {
     var deferred = Q.defer();
-    console.log('deleting', user, pub, action);
-    ger.delete_events(journal, user, pub, action)
+    ger.delete_events(journal, {person: user, thing: pub, action: action})
       .then(function(count) {
         deferred.resolve(count);
       });
@@ -108,9 +108,9 @@ var Recs = {
       thing: pub,
       expires_at: now.format('YYYY-MM-DD')
     };
-    console.log('created event');
-    ger.events([event]).then(function(){
-      console.log('inserted event');
+
+    ger.events([event]).then(function() {
+
       deferred.resolve(null);
     });
     return deferred.promise;
