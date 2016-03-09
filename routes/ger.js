@@ -35,6 +35,24 @@ router.get('/:journal', function(req, res, next){
       });
 });
 
+router.delete('/:journal', function(req,res,next){
+  var journalId = req.params.journal,
+      user = req.body.user,
+      pubId = req.body.pub,
+      action = req.body.action;
+  if (!user && !pubId && action){
+    res.json({
+      error: 'Missing user, pub, or action'
+    });
+  }
+  utils.deleteAction(journalId, user, pubId, action)
+    .then(function(result){
+      if (!result.err){
+        res.sendStatus(200);
+      }
+    });
+});
+
 
 
 
