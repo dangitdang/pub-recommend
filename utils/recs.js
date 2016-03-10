@@ -18,7 +18,7 @@ var createMutualExs = function(obj) {
   var dict = {};
   R.forEach(function(k) {
     dict[k] = obj[k];
-    dict[obj[k]] = k
+    dict[obj[k]] = k;
   }, R.keys(obj));
   return dict;
 };
@@ -36,62 +36,89 @@ var inputValidation = function(events, action) {
   return true;
 };
 
+var getFeaturedPubs = function(journal) {
+  var deferred = Q.defer();
+  ger.find_events(journal,{
+    person : 'featuredUser'
+  }).then(function(events){
+    var features = R.map(function(event){
+      return event.thing;
+    }, events);
+    deferred.resolve(features);
+  });
+  return deferred.promise;
+};
+
 var Recs = {
-  inputAction: function(journal, user, pub, action) {
-    var deferred = Q.defer();
-    ger.namespace_exists(journal)
-      .then(function(value) {
-        if (value) {
-          ger.find_events(journal, {
-            person: user,
-            thing: pub
-          }).then(function(events) {
-            if (!inputValidation(events, action)) {
-              if (config.exclusiveActions[action]) {
-                var toBeRemoved = config.exclusiveActions[action];
-                Recs.deleteAction(journal, user, pub, toBeRemoved);
-              } else {
-                return deferred.reject(mutualExclusives[action]);
+    inputAction: function(journal, user, pub, action) {
+      var deferred = Q.defer();
+      ger.namespace_exists(journal)
+        .then(function(value) {
+          if (value) {
+            ger.find_events(journal, {
+              person: user,
+              thing: pub
+            }).then(function(events) {
+              if (!inputValidation(events, action)) {
+                if (config.exclusiveActions[action]) {
+                  var toBeRemoved = config.exclusiveActions[action];
+                  Recs.deleteAction(journal, user, pub, toBeRemoved);
+                } else {
+                  return deferred.reject(mutualExclusives[action]);
+                }
               }
-            }
-            return Recs.insertEvent(journal, user, pub, action)
-              .then(function() {
-                deferred.resolve(null);
-              });
-          });
-        } else {
-          ger.initialize_namespace(journal).then(function() {
-            Recs.insertEvent(journal, user, pub, action)
-              .then(function() {
-                deferred.resolve(null);
-              });
-          });
-        }
-      });
-    return deferred.promise;
-  },
-  getRecommendations: function(journal, user) {
-    var deferred = Q.defer();
-    ger.namespace_exists(journal)
-      .then(function(value) {
-        if (!value) {
-          return deferred.reject({
-            error: 'Journal not found'
-          });
-        }
-        ger.recommendations_for_person(journal, user, {
-          actions: config.actions,
-          filter_previous_actions: ['read', 'like']
-        }).then(function(recommendations) {
-          //TODO: Add featured pubs and defaults rec
-          deferred.resolve(recommendations);
+              return Recs.insertEvent(journal, user, pub, action)
+                .then(function() {
+                  deferred.resolve(null);
+                });
+            });
+          } else {
+            ger.initialize_namespace(journal).then(function() {
+              Recs.insertEvent(journal, user, pub, action)
+                .then(function() {
+                  deferred.resolve(null);
+                });
+            });
+          }
         });
-      });
+      return deferred.promise;
+    },
+    getRecommendations: function(journal, query, type) {
+      var deferred = Q.defer();
+      ger.namespace_exists(journal)
+        .then(function(value) {
+
+            if (!value) {
+              return deferred.reject({
+                error: 'Journal not found'
+              });
+            }
+
+            var opts = {
+              actions: config.actions,
+              filter_previous_actions : type === 'person' ? ['read'] : undefined
+            };
+            ger['recommendations_for_' + type](journal, query, opts)
+              .then(function(recs) {
+                console.log(recs);
+                if (recs.recommendations.length === 0){
+                  return getFeaturedPubs(journal).then(function(features){
+                    deferred.resolve(features);
+                  });
+                }
+                deferred.resolve(recs);
+            });
+        });
+
     return deferred.promise;
   },
   deleteAction: function(journal, user, pub, action) {
     var deferred = Q.defer();
-    ger.delete_events(journal, {person: user, thing: pub, action: action})
+    ger.delete_events(journal, {
+        person: user,
+        thing: pub,
+        action: action
+      })
       .then(function(count) {
         deferred.resolve(count);
       });
