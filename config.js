@@ -1,6 +1,6 @@
 module.exports.db = {
 	client : 'pg',
-	connection: process.env.POSTGRES,
+	connection: process.env.DATABASE_URL,
 };
 module.exports.actions = {
 	'read' : 1,
