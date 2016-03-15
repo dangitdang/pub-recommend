@@ -9,7 +9,6 @@ router.post('/:journal', function(req, res, next) {
     action = req.body.action,
     pubId = req.body.pub,
     user = req.body.user;
-  console.log("I'm here at post request");
   if (action === 'feature') {
     utils.inputAction(journalId, 'featuredUser', pubId, 'feature')
       .then(function(error){
@@ -30,7 +29,6 @@ router.post('/:journal', function(req, res, next) {
 
 
 router.get('/:journal', function(req, res, next) {
-  console.log("Why am I at get??");
   var journalId = req.params.journal,
     query = req.query.user || req.query.pub;
   if (Object.keys(req.query).length === 0) {
