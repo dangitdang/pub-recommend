@@ -1,5 +1,6 @@
 var g = require('ger');
 var config = require('../config.js');
+pg.defaults.ssl = true;
 var knex = require('knex')(config.db);
 var ems = new g.PsqlESM({
   knex: knex

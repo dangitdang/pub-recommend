@@ -1,6 +1,7 @@
 module.exports.db = {
 	client : 'pg',
 	connection: process.env.DATABASE_URL,
+	ssl: true
 };
 module.exports.actions = {
 	'read' : 1,

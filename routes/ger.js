@@ -13,7 +13,7 @@ router.post('/:journal', function(req, res, next) {
     utils.inputAction(journalId, 'featuredUser', pubId, 'feature')
       .then(function(error){
         if (!error) {
-          res.sendStatus(200);
+          return res.sendStatus(200);
         }
       });
   }
@@ -23,7 +23,7 @@ router.post('/:journal', function(req, res, next) {
         res.sendStatus(200);
       }
     }, function(containedAction) {
-      res.sendStatus(200);
+        res.sendStatus(200);
     });
 });
 
