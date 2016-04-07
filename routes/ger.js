@@ -1,23 +1,23 @@
 var router = require('express').Router();
 var utils = require('../utils/recs.js');
 
-/*
 
-*/
 router.post('/:journal', function(req, res, next) {
   var journalId = req.params.journal,
-    action = req.body.action,
+    actions = req.body.actions,
     pubId = req.body.pub,
     user = req.body.user;
-  if (action === 'feature') {
-    utils.inputAction(journalId, 'featuredUser', pubId, 'feature')
+  console.log(req.body);
+  console.log(typeof(actions));
+  if (actions[0] === 'feature') {
+    utils.inputAction(journalId, 'featuredUser', pubId, ['feature'])
       .then(function(error){
         if (!error) {
           return res.sendStatus(200);
         }
       });
   }
-  utils.inputAction(journalId, user, pubId, action)
+  utils.inputAction(journalId, user, pubId, actions)
     .then(function(error) {
       if (!error) {
         res.sendStatus(200);
@@ -53,10 +53,10 @@ router.delete('/:journal', function(req, res, next) {
   var journalId = req.params.journal,
     user = req.body.user,
     pubId = req.body.pub,
-    action = req.body.action;
-  if (!user && !pubId && action) {
+    actions = req.body.actions;
+  if (!user && !pubId && actions) {
     res.json({
-      error: 'Missing user, pub, or action'
+      error: 'Missing user, pub, or actions'
     });
   }
   utils.deleteAction(journalId, user, pubId, action)
